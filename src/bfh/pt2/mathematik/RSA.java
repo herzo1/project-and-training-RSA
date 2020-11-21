@@ -24,12 +24,15 @@ public class RSA {
 
     /**
      * Solution to Exercise 5a:
-     * Encryption of message  with P_1, Q_1
-     * @return encrypted slices of the message M_1
+     * @param publicKey - public key of the perwon, who wants to sign and encrypt a message
+     * @param n - product of the two prime numbers
+     * @return - Object with the encrypted message
      */
-    public static List<Integer> encryptMessage(String msg, int p, int q, int e) {
-        final int n = p * q;
+    public static EncryptedMessage encryptedMessage(String msg, int publicKey, int n) {
+        return new EncryptedMessage(encrypt(msg, publicKey, n));
+    }
 
+    private static List<Integer> encrypt(String msg, int publicKey, int n) {
         List<Integer> slicedMessage = messageASCIISlicer(msg, n);
 
         List<Integer> encryptedMessage = new ArrayList<>();
@@ -37,7 +40,7 @@ public class RSA {
          * Encrypt every sliced junk of the original message and store it inside
          * the encryptedMessage list.
          */
-        slicedMessage.forEach(msgJnk -> encryptedMessage.add(encryptASCIIMessage(msgJnk, e, n)));
+        slicedMessage.forEach(msgJnk -> encryptedMessage.add(encryptASCIIMessage(msgJnk, publicKey, n)));
         return encryptedMessage;
     }
 
@@ -88,24 +91,33 @@ public class RSA {
      * @param msg - message to encrypt
      * @return - (msg^e)%n
      */
-    private static Integer encryptASCIIMessage(Integer msg, int e, int n) {
-        return (int) (Math.pow(msg, e) % n);
+    private static Integer encryptASCIIMessage(Integer msg, int publicKey, int n) {
+        return (int) (Math.pow(msg, publicKey) % n);
     }
 
     /**
      * Solution to Exercise 5b:
      * A hash funktion to sign the encrypted message with P_2 and Q_2 with NAME.
      * @param msg - encrypted message
-     * @return - hash value for the encrypted message
+     * @param privateKey - private key of the person, who wants to sign and encrypt a message
+     * @param publicKey - public key of the perwon, who wants to sign and encrypt a message
+     * @param n - product of the two prime numbers
+     * @return - Object with the encrypted message and the signed hash
      */
-    public static List<Integer> signMessage(String msg, int p, int q, int e) {
-        int hash = msg.hashCode();
-        return null;
+    public static EncryptedMessage encryptAndSignMessage(String msg, int privateKey, int publicKey, int n) {
+        int signedHash = sign(msg.hashCode(), privateKey, n);
+        return new EncryptedMessage(signedHash, encrypt(msg, publicKey, n));
     }
 
-    private static int sign(int hash, int p, int q, int e) {
-        int d = (p-1) * (q-1);
-        return 0;
+    /**
+     * Method to sign a hash value.
+     * @param hash - the hash value to sign
+     * @param privateKey - private key of the person, who wants to sign the hash
+     * @param n - product of the two prime numbers
+     * @return the signed hash value
+     */
+    private static int sign(int hash, int privateKey, int n) {
+        return squareAndMultiply(hash, privateKey, n);
     }
 
     /**

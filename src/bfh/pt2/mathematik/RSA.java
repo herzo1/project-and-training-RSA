@@ -1,6 +1,7 @@
 package bfh.pt2.mathematik;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class RSA {
@@ -107,39 +108,42 @@ public class RSA {
         return 0;
     }
 
-    public static int power(int number, int power, int modulo) {
+    /**
+     * Implementation of the 'Square and Multiply Algorithmen'.
+     * Calculates and returns the result of: (number^power) % modulo
+     */
+    private static int squareAndMultiply(int number, int power, int modulo) {
+        /*
+         * Find the 2er potencies of the power.
+         */
         List<Integer> twoPotencies = new ArrayList<>();
         while (power > 0) {
             int pow = 0;
-            int powerOfTwo = getTwoPotency(pow);
-            while (powerOfTwo < power) {
-                powerOfTwo = (int) Math.pow(2, ++pow);
-            }
-
-            if (power == 1) {
-                twoPotencies.add(1);
-                power = 0;
-            } else {
-                twoPotencies.add(--pow);
-                power -= getTwoPotency(pow);
-            }
+            while (getTwoPotency(pow) < power) { pow++; }
+            pow = Math.max(0, pow - 1);
+            twoPotencies.add(getTwoPotency(pow));
+            power -= getTwoPotency(pow);
         }
 
-        int potency = 1;
+        /*
+         * The square and multiplying part.
+         */
         int result = 1;
-        int temp_res = 0;
-        int temp_num = number;
-        while (potency <= twoPotencies.get(0)) {
-
-            temp_res = temp_num % modulo;
-            temp_num = (int) Math.pow(temp_res, 2);
-
-            if (twoPotencies.contains(potency)) {
-                result *= temp_res;
+        for (
+                int powOfTwo = 1;
+                powOfTwo <= Collections.max(twoPotencies);
+                powOfTwo *= 2
+        ) {
+            number = number % modulo;
+            if (twoPotencies.contains(powOfTwo)) {
+                result *= number;
             }
-            potency *= 2;
+            number = (int) Math.pow(number, 2);
         }
 
+        /*
+         * Simplified the last step, because modulo of big numbers is less critical.
+         */
         return result % modulo;
     }
 

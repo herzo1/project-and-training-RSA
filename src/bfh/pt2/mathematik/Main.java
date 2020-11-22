@@ -23,16 +23,35 @@ public class Main {
         int publicKey, privateKey, n;
         EncryptedMessage encryptedMessage;
 
-        // Exercise 5a:
+        System.out.println("Exercise 5a:");
         publicKey = E_1;
         n = P_1 * Q_1;
         encryptedMessage = RSA.encryptedMessage(M_1, publicKey, n);
+        /*
+         * Output:
+         * Encrypted Message:
+         * 6111168
+         * 18748107
+         * 18748107
+         * 19090480
+         */
+        System.out.println(encryptedMessage);
 
-        // Exercise 5b:
+        System.out.println("Exercise 5b:");
         privateKey = (P_2 - 1) * (Q_2 - 1);
         publicKey = E_1;
         n = P_2 * P_1;
         encryptedMessage = RSA.encryptAndSignMessage(NAME, privateKey, publicKey, n);
+        /*
+         * Output:
+         * Signed Hash: 12006231
+         * Encrypted Message:
+         * 15842858
+         * 2597783
+         * 5686150
+         */
+        System.out.println(encryptedMessage);
+
 
 
     }

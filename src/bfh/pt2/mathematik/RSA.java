@@ -1,10 +1,23 @@
 package bfh.pt2.mathematik;
 
+import javax.xml.stream.events.Characters;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class RSA {
+
+    public static Key getKeys(int p, int q, int e) {
+        int n = p * q;
+        System.out.println("n: " + n);
+        int privateKey = 1;
+        while (((privateKey * e) % ((p-1) * (q-1))) != 1 || e == privateKey) {
+            privateKey++;
+        }
+
+        return new Key(n, privateKey, e);
+    }
 
     /**
      * Solution to Exercise 5a:
@@ -18,6 +31,7 @@ public class RSA {
 
     private static List<Integer> encrypt(String msg, int publicKey, int n) {
         List<Integer> slicedMessage = messageASCIISlicer(msg, n);
+        slicedMessage.forEach(System.out::println);
 
         List<Integer> encryptedMessage = new ArrayList<>();
         /*
@@ -25,6 +39,21 @@ public class RSA {
          * the encryptedMessage list.
          */
         slicedMessage.forEach(msgJnk -> encryptedMessage.add(encryptASCIIMessage(msgJnk, publicKey, n)));
+        return encryptedMessage;
+    }
+
+    public static List<BigInteger> encrypting(String msg, int publicKey, int n) {
+
+        List<Integer> slicedMessage = messageASCIISlicer(msg, n);
+        slicedMessage.forEach(System.out::println);
+
+        /*
+         * Encrypt every sliced junk of the original message and store it inside
+         * the encryptedMessage list.
+         */
+        List<BigInteger> encryptedMessage = new ArrayList<>();
+        slicedMessage.forEach(junk -> encryptedMessage.add(BigInteger.valueOf(junk).modPow(BigInteger.valueOf(publicKey), BigInteger.valueOf(n))));
+
         return encryptedMessage;
     }
 
@@ -51,22 +80,27 @@ public class RSA {
          */
         String temp = "";
         for(char letter : message.toCharArray()) {
+            result.add((int)letter);
             /*
              * If the temp value is greater then the max size (divided by 1000)
              * than at it to the result and begin a new junk
              */
+            /*
             if (!temp.isEmpty() && Integer.parseInt(temp) > maxSize) {
                 result.add(Integer.parseInt(temp));
                 temp = "";
             }
+             */
             /*
              * (int) letter gets the decimal ASCII value of the letter.
              */
-            temp += String.valueOf((int) letter);
+            //temp += String.valueOf((int) letter);
         }
+        /*
         if (!temp.isEmpty()) {
             result.add(Integer.parseInt(temp));
         }
+         */
         return result;
     }
 
@@ -76,7 +110,7 @@ public class RSA {
      * @return - (msg^e)%n
      */
     private static Integer encryptASCIIMessage(Integer msg, int publicKey, int n) {
-        return (int) (Math.pow(msg, publicKey) % n);
+        return squareAndMultiply(msg, publicKey, n);
     }
 
     /**
@@ -124,7 +158,7 @@ public class RSA {
         /*
          * The square and multiplying part.
          */
-        int result = 1;
+        long result = 1;
         for (
                 int powOfTwo = 1;
                 powOfTwo <= Collections.max(twoPotencies);
@@ -140,11 +174,29 @@ public class RSA {
         /*
          * Simplified the last step, because modulo of big numbers is less critical.
          */
-        return result % modulo;
+        return  (int) (result % modulo);
     }
 
     private static int getTwoPotency(int power) {
         return (int) Math.pow(2, power);
     }
 
+    public static String decryptMessage(EncryptedMessage msg, int privateKey, int n) {
+        StringBuilder sb = new StringBuilder();
+        msg.message.forEach(junk -> sb.append(decrypt(junk, privateKey, n)));
+        return sb.toString();
+    }
+
+    public static String decryptMessage(List<BigInteger> msg, int privateKey, int n) {
+        StringBuilder sb = new StringBuilder();
+        msg.forEach(junk -> sb.append(junk.modPow(BigInteger.valueOf(privateKey), BigInteger.valueOf(n))));
+        return sb.toString();
+    }
+
+    private static String decrypt(int encryptedMsg, int privateKey, int n) {
+        BigInteger msg = BigInteger.valueOf(encryptedMsg);
+        msg = msg.modPow(BigInteger.valueOf(privateKey), BigInteger.valueOf(n));
+        System.out.println(msg);
+        return Character.toString((char) squareAndMultiply(encryptedMsg, privateKey, n));
+    }
 }

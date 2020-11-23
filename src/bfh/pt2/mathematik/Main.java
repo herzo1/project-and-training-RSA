@@ -63,10 +63,11 @@ public class Main {
          */
 
         System.out.println("Exercise 5c:");
+        msg = new EncryptedMessage(Arrays.asList(M_2));
         System.out.println(RSA.decryptMessage(msg, key));
         /*
          * Output:
-         * Oliver
+         * transmit
          */
 
         System.out.println("Exercise 5d:");

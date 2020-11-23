@@ -24,43 +24,7 @@ public class Main {
 
     public static final String NAME = "Oliver";
 
-    public static void main(String[] args) {
-        long publicKey = 2;
-        long privateKey = 1;
-        while (true) {
-            try {
-                if (publicKey > N){
-                    throw new Exception("stop it");
-                }
-                privateKey = 1;
-                while (((privateKey * publicKey) % ((8849-1) * (8761-1))) != 1 || publicKey == privateKey) {
-                    privateKey++;
-                    if (privateKey > N) {
-                        throw new RuntimeException("to large pk");
-                    }
-                }
-                break;
-            } catch (RuntimeException e) {
-                System.out.println("NOT Public Key: " + publicKey);
-                publicKey++;
-            } catch (Exception e) {
-                System.out.println("no keys found");
-                break;
-            }
-        }
-        System.out.println("public: " + publicKey);
-        // -> 11
-        System.out.println("private: " + privateKey);
-        // -> 14092451
-
-        for (int msg : M_2) {
-            System.out.println(RSA.decrypt(msg, privateKey, N));
-        }
-
-        for (int msg : M_3) {
-            System.out.println(RSA.decrypt(msg, privateKey, N));
-        }
-
+    public static void main(String[] args) throws Exception {
         EncryptedMessage msg;
         Key key;
 
@@ -103,6 +67,14 @@ public class Main {
         /*
          * Output:
          * Oliver
+         */
+
+        System.out.println("Exercise 5d:");
+        msg = new EncryptedMessage(Arrays.asList(M_3));
+        System.out.println(RSA.crackEncryption(msg, N));
+        /*
+         * Output:
+         * keys.
          */
     }
 }

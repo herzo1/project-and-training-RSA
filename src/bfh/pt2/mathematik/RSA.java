@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class RSA {
 
@@ -21,7 +22,12 @@ public class RSA {
 
     private static int createPrivateKey(int p, int q, int e) {
         int privateKey = 1;
-        while (((privateKey * e) % ((p-1) * (q-1))) != 1 || e == privateKey) { privateKey++; }
+        while (((privateKey * e) % ((p-1) * (q-1))) != 1 || e == privateKey) {
+            privateKey++;
+            if (privateKey > p * q) {
+                throw new RuntimeException("No private key found.");
+            }
+        }
         return privateKey;
     }
 
@@ -135,7 +141,7 @@ public class RSA {
         return sb.toString();
     }
 
-    public static char decrypt(int encryptedMsg, int privateKey, int n) {
+    private static char decrypt(int encryptedMsg, int privateKey, int n) {
         /*
          * Doesn't worked for me without BigInteger
          * String decryptedMsg = String.valueOf(squareAndMultiply(encryptedMsg, privateKey, n));
@@ -144,7 +150,7 @@ public class RSA {
         return (char) decryptedMsg.intValue();
     }
 
-    public static char decrypt(int encryptedMsg, long privateKey, int n) {
+    private static char decrypt(int encryptedMsg, long privateKey, int n) {
         /*
          * Doesn't worked for me without BigInteger
          * String decryptedMsg = String.valueOf(squareAndMultiply(encryptedMsg, privateKey, n));
@@ -152,4 +158,75 @@ public class RSA {
         BigInteger decryptedMsg = BigInteger.valueOf(encryptedMsg).modPow(BigInteger.valueOf(privateKey), BigInteger.valueOf(n));
         return (char) decryptedMsg.intValue();
     }
+
+    /**
+     * Crack RSA encryption by trying to figure out the primes.
+     * @param msg - encrypted message
+     * @param n - N for the encrypted message
+     * @return (hopefully) the decrypted message
+     * @throws Exception - if it couldn't crack the encryption
+     */
+    public static String crackEncryption(EncryptedMessage msg, int n) throws Exception {
+        /*
+         * calculate u and v with x
+         */
+        int u = findXValue(n);
+        int v = (int) Math.sqrt(Math.pow(u, 2) - n);
+
+        /*
+         * calculate p and q with u and v
+         */
+        int p = u + v;
+        int q = u - v;
+
+        /*
+         * try to find a public key for which we can find a private key
+         */
+        int publicKey = 2; // start with two, because 1 is every time a match
+        int privateKey;
+        while (true) {
+            try {
+                if (publicKey > n){
+                    throw new Exception("No matching keys found.");
+                }
+                privateKey = createPrivateKey(p, q, publicKey);
+                break;
+            } catch (RuntimeException e) {
+                // current public key is invalid
+                publicKey++;
+            }
+        }
+
+        /*
+         * create a key object and decrypt message with it
+         */
+        Key key = new Key(n, privateKey, publicKey);
+        return decryptMessage(msg, key);
+    }
+
+    private static int findXValue(int n) {
+        /*
+         * find x by checking if x^2 - n is a square number
+         */
+        int x = (int) Math.sqrt(n);
+        while (!isSquareNumber(x, n)) { x++; }
+        return x;
+    }
+
+    private static boolean isSquareNumber(int x, int n) {
+        int num = (int)(Math.pow(x, 2) - n);
+        /*
+         * if x^2 - n ends with 2, 3, 7, 8 -> it's no square number
+         */
+        final int[] lastDigit = {2,3,7,8};
+        if (IntStream.of(lastDigit).anyMatch(digit -> digit == num % 10)) {
+            return false;
+        }
+
+        /*
+         * check if number is greater or equals than zero and if the square root is even
+         */
+        return num >= 0 && Math.sqrt(num) % 1 == 0;
+    }
+
 }

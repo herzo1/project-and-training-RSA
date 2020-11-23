@@ -1,6 +1,5 @@
 package bfh.pt2.mathematik;
 
-import javax.xml.stream.events.Characters;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -136,7 +135,16 @@ public class RSA {
         return sb.toString();
     }
 
-    private static char decrypt(int encryptedMsg, int privateKey, int n) {
+    public static char decrypt(int encryptedMsg, int privateKey, int n) {
+        /*
+         * Doesn't worked for me without BigInteger
+         * String decryptedMsg = String.valueOf(squareAndMultiply(encryptedMsg, privateKey, n));
+         */
+        BigInteger decryptedMsg = BigInteger.valueOf(encryptedMsg).modPow(BigInteger.valueOf(privateKey), BigInteger.valueOf(n));
+        return (char) decryptedMsg.intValue();
+    }
+
+    public static char decrypt(int encryptedMsg, long privateKey, int n) {
         /*
          * Doesn't worked for me without BigInteger
          * String decryptedMsg = String.valueOf(squareAndMultiply(encryptedMsg, privateKey, n));

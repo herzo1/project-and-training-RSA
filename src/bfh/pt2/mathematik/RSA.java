@@ -8,123 +8,66 @@ import java.util.List;
 
 public class RSA {
 
+    /**
+     * Creates a key object for the input primes and the public key
+     * @param p - first prime factor
+     * @param q - second prime factor
+     * @param e - public key
+     * @return key object with private key, public key and n
+     */
     public static Key getKeys(int p, int q, int e) {
         int n = p * q;
-        System.out.println("n: " + n);
-        int privateKey = 1;
-        while (((privateKey * e) % ((p-1) * (q-1))) != 1 || e == privateKey) {
-            privateKey++;
-        }
+        return new Key(n, createPrivateKey(p, q, e), e);
+    }
 
-        return new Key(n, privateKey, e);
+    private static int createPrivateKey(int p, int q, int e) {
+        int privateKey = 1;
+        while (((privateKey * e) % ((p-1) * (q-1))) != 1 || e == privateKey) { privateKey++; }
+        return privateKey;
     }
 
     /**
-     * Solution to Exercise 5a:
-     * @param publicKey - public key of the perwon, who wants to sign and encrypt a message
-     * @param n - product of the two prime numbers
-     * @return - Object with the encrypted message
+     * Encrypts a message with the given keys
+     * @param msg - message to encrypt
+     * @param key - key object
+     * @return EncryptedMessage Object
      */
-    public static EncryptedMessage encryptedMessage(String msg, int publicKey, int n) {
-        return new EncryptedMessage(encrypt(msg, publicKey, n));
+    public static EncryptedMessage encryptedMessage(String msg, Key key) {
+        return new EncryptedMessage(encrypt(msg, key.publicKey, key.n));
     }
 
     private static List<Integer> encrypt(String msg, int publicKey, int n) {
-        List<Integer> slicedMessage = messageASCIISlicer(msg, n);
-        slicedMessage.forEach(System.out::println);
+        /*
+         * Break down the whole message in smaller parts. I'm using individual letters, because
+         * otherwise I couldn't calculate it without using BigInteger.
+         */
+        List<Integer> slicedMessage = new ArrayList<>();
+        for (char letter : msg.toCharArray()) {
+            slicedMessage.add((int) letter);
+        }
 
         List<Integer> encryptedMessage = new ArrayList<>();
         /*
-         * Encrypt every sliced junk of the original message and store it inside
+         * Encrypt every sliced part of the original message and store it inside
          * the encryptedMessage list.
          */
-        slicedMessage.forEach(msgJnk -> encryptedMessage.add(encryptASCIIMessage(msgJnk, publicKey, n)));
+        slicedMessage.forEach(subMsg -> encryptedMessage.add(encryptASCIIMessage(subMsg, publicKey, n)));
         return encryptedMessage;
     }
 
-    public static List<BigInteger> encrypting(String msg, int publicKey, int n) {
-
-        List<Integer> slicedMessage = messageASCIISlicer(msg, n);
-        slicedMessage.forEach(System.out::println);
-
-        /*
-         * Encrypt every sliced junk of the original message and store it inside
-         * the encryptedMessage list.
-         */
-        List<BigInteger> encryptedMessage = new ArrayList<>();
-        slicedMessage.forEach(junk -> encryptedMessage.add(BigInteger.valueOf(junk).modPow(BigInteger.valueOf(publicKey), BigInteger.valueOf(n))));
-
-        return encryptedMessage;
-    }
-
-    /**
-     * Method to slice a message into junks of ASCII-Numbers, which are not
-     * greater then the maxSize.
-     * @param message - Message to slice into ASCII junks
-     * @return - returns an array of ASCII junks
-     */
-    private static List<Integer> messageASCIISlicer(String message, int maxSize) {
-        /*
-         * One message slice cannot be greater then the max size. The highest ASCII value is 127.
-         * I divided the max Size by 1000, so when I add one more letter to the message, it won't
-         * overlap the max size.
-         */
-         maxSize = maxSize / 1000;
-
-        /*
-         * The result will be a list of integer, which representing one or more ASCII character
-         */
-        List<Integer> result = new ArrayList<>();
-        /*
-         * I use a string to keep track of the current junk, so I don't have to worry about powers of 10
-         */
-        String temp = "";
-        for(char letter : message.toCharArray()) {
-            result.add((int)letter);
-            /*
-             * If the temp value is greater then the max size (divided by 1000)
-             * than at it to the result and begin a new junk
-             */
-            /*
-            if (!temp.isEmpty() && Integer.parseInt(temp) > maxSize) {
-                result.add(Integer.parseInt(temp));
-                temp = "";
-            }
-             */
-            /*
-             * (int) letter gets the decimal ASCII value of the letter.
-             */
-            //temp += String.valueOf((int) letter);
-        }
-        /*
-        if (!temp.isEmpty()) {
-            result.add(Integer.parseInt(temp));
-        }
-         */
-        return result;
-    }
-
-    /**
-     * Method to encrypt a message with RSA.
-     * @param msg - message to encrypt
-     * @return - (msg^e)%n
-     */
     private static Integer encryptASCIIMessage(Integer msg, int publicKey, int n) {
         return squareAndMultiply(msg, publicKey, n);
     }
 
     /**
-     * Solution to Exercise 5b:
-     * A hash funktion to sign the encrypted message with P_2 and Q_2 with NAME.
+     * Creates a signed hash for a given message and the keys and also encrypt the message with the key
      * @param msg - encrypted message
-     * @param privateKey - private key of the person, who wants to sign and encrypt a message
-     * @param publicKey - public key of the perwon, who wants to sign and encrypt a message
-     * @param n - product of the two prime numbers
+     * @param key - Key object with private and public key and n
      * @return - Object with the encrypted message and the signed hash
      */
-    public static EncryptedMessage encryptAndSignMessage(String msg, int privateKey, int publicKey, int n) {
-        int signedHash = sign(msg.hashCode(), privateKey, n);
-        return new EncryptedMessage(signedHash, encrypt(msg, publicKey, n));
+    public static EncryptedMessage encryptAndSignMessage(String msg, Key key) {
+        int signedHash = sign(msg.hashCode(), key.privateKey, key.n);
+        return new EncryptedMessage(signedHash, encrypt(msg, key.publicKey, key.n));
     }
 
     /**
@@ -181,22 +124,24 @@ public class RSA {
         return (int) Math.pow(2, power);
     }
 
-    public static String decryptMessage(EncryptedMessage msg, int privateKey, int n) {
+    /**
+     * Decrypte an encrypted message with the given keys
+     * @param msg - encrypted message
+     * @param key - Key object with private and public key and n
+     * @return the encrypted message
+     */
+    public static String decryptMessage(EncryptedMessage msg, Key key) {
         StringBuilder sb = new StringBuilder();
-        msg.message.forEach(junk -> sb.append(decrypt(junk, privateKey, n)));
+        msg.message.forEach(junk -> sb.append(decrypt(junk, key.privateKey, key.n)));
         return sb.toString();
     }
 
-    public static String decryptMessage(List<BigInteger> msg, int privateKey, int n) {
-        StringBuilder sb = new StringBuilder();
-        msg.forEach(junk -> sb.append(junk.modPow(BigInteger.valueOf(privateKey), BigInteger.valueOf(n))));
-        return sb.toString();
-    }
-
-    private static String decrypt(int encryptedMsg, int privateKey, int n) {
-        BigInteger msg = BigInteger.valueOf(encryptedMsg);
-        msg = msg.modPow(BigInteger.valueOf(privateKey), BigInteger.valueOf(n));
-        System.out.println(msg);
-        return Character.toString((char) squareAndMultiply(encryptedMsg, privateKey, n));
+    private static char decrypt(int encryptedMsg, int privateKey, int n) {
+        /*
+         * Doesn't worked for me without BigInteger
+         * String decryptedMsg = String.valueOf(squareAndMultiply(encryptedMsg, privateKey, n));
+         */
+        BigInteger decryptedMsg = BigInteger.valueOf(encryptedMsg).modPow(BigInteger.valueOf(privateKey), BigInteger.valueOf(n));
+        return (char) decryptedMsg.intValue();
     }
 }

@@ -25,58 +25,48 @@ public class Main {
     public static final String NAME = "Oliver";
 
     public static void main(String[] args) {
-        Key key = RSA.getKeys(P_1, P_2, E_1);
-
-        List<Integer> slicedMessage = new ArrayList<>();
-        for (char let : NAME.toCharArray()) {
-            slicedMessage.add((int) let);
-        }
-
-        slicedMessage = Arrays.asList(688, 232, 687, 966, 668);
-
-        List<BigInteger> encryptedMsg = new ArrayList<>();
-        slicedMessage.forEach(letter -> encryptedMsg.add(
-                BigInteger.valueOf(letter)
-                        .modPow(
-                                BigInteger.valueOf(key.publicKey),
-                                BigInteger.valueOf(key.n))
-        ));
-
-        System.out.println("Encrypted");
-        encryptedMsg.forEach(System.out::println);
-
-        List<BigInteger> decryptedMsg = new ArrayList<>();
-        encryptedMsg.forEach(encryptedLetter -> decryptedMsg.add(
-                encryptedLetter.modPow(
-                                BigInteger.valueOf(key.privateKey),
-                                BigInteger.valueOf(key.n))
-        ));
-
-        System.out.println("Decrypted");
-        decryptedMsg.forEach(System.out::println);
-
-        /*
-        int publicKey, privateKey, n;
-        EncryptedMessage encryptedMessage;
+        EncryptedMessage msg;
+        Key key;
 
         System.out.println("Exercise 5a:");
-        publicKey = E_1;
-        n = P_1 * Q_1;
-        encryptedMessage = RSA.encryptedMessage(M_1, publicKey, n);
-
-        System.out.println(encryptedMessage);
+        key = RSA.getKeys(P_1, Q_1, E_1);
+        msg = RSA.encryptedMessage(M_1, key);
+        System.out.println(msg);
+        /*
+         * Output:
+         * Encrypted Message:
+         * 1331000
+         * 1030301
+         * 1030301
+         * 1000000
+         * 1030301
+         * 1000000
+         * 32768
+         * 1560896
+         * 1367631
+         */
 
         System.out.println("Exercise 5b:");
-        privateKey = (P_2 - 1) * (Q_2 - 1);
-        publicKey = E_1;
-        n = P_2 * P_1;
-        // encryptedMessage = RSA.encryptAndSignMessage(NAME, privateKey, publicKey, n);
-        List<BigInteger> encryptedMsg = RSA.encrypting(NAME, publicKey, n);
-        encryptedMsg.forEach(System.out::println);
-        //System.out.println(encryptedMessage);
+        key = RSA.getKeys(P_2, Q_2, E_1);
+        msg = RSA.encryptAndSignMessage(NAME, key);
+        System.out.println(msg);
+        /*
+         * Output:
+         * Signed Hash: 20045305
+         * Encrypted Message:
+         * 493039
+         * 1259712
+         * 1157625
+         * 1643032
+         * 1030301
+         * 1481544
+         */
 
         System.out.println("Exercise 5c:");
-        System.out.println(RSA.decryptMessage(encryptedMsg, privateKey, n));
+        System.out.println(RSA.decryptMessage(msg, key));
+        /*
+         * Output:
+         * Oliver
          */
     }
 }
